@@ -13,11 +13,20 @@ import android.widget.Toast;
 
 import com.example.skewrad.postit.Core.MainActivity;
 import com.example.skewrad.postit.R;
+import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.firebase.client.ValueEventListener;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.EventListener;
 
 public class SignupActivity extends AppCompatActivity {
 
@@ -25,14 +34,16 @@ public class SignupActivity extends AppCompatActivity {
     private Button btnSignUp, btnBack;
     private ProgressBar progressBar;
     private FirebaseAuth auth;
+    private String userId;
+    private Firebase firebaseRef;
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.signup_activity);
-
-        Firebase.setAndroidContext(this);
-        Firebase firebase = new Firebase("https://postit-2c89b.firebaseio.com/");
 
         //Get Firebase auth instance
         auth = FirebaseAuth.getInstance();
@@ -51,7 +62,24 @@ public class SignupActivity extends AppCompatActivity {
                 String pseudo = inputPseudo.getText().toString().trim();
                 String email = inputEmail.getText().toString().trim();
                 String password = inputPassword.getText().toString().trim();
+                String currentuser = FirebaseAuth.getInstance().getUid();
 
+
+                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                userId = generate(10);
+
+                DatabaseReference myRef = database.getReference("Users/" + currentuser + "/");
+                myRef.setValue("");
+                DatabaseReference myRefP = database.getReference("Users/" + currentuser + "/" + "Pseudo");
+                myRefP.setValue(pseudo);
+                DatabaseReference myRefPass = database.getReference("Users/" + currentuser + "/" + "Mot de passe");
+                myRefPass.setValue(password);
+
+
+                if (TextUtils.isEmpty(pseudo)){
+                    Toast.makeText(getApplicationContext(), "Entrez un pseudo valide !", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 if (TextUtils.isEmpty(email)) {
                     Toast.makeText(getApplicationContext(), "Entrez une adresse mail valide !", Toast.LENGTH_SHORT).show();
                     return;
@@ -92,6 +120,16 @@ public class SignupActivity extends AppCompatActivity {
                 finish();
             }
         });
+    }
+
+    public static String generate(int length) {
+        String chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+        StringBuffer pass = new StringBuffer();
+        for(int x=0;x<length;x++)   {
+            int i = (int)Math.floor(Math.random() * (chars.length() -1));
+            pass.append(chars.charAt(i));
+        }
+        return pass.toString();
     }
 
     @Override
